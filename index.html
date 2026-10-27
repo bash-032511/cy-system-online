@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYMS - Container Yard Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0a3651',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Dashboard Visuals -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF for PDF Report Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.7); }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-slate-900 text-gray-800 dark:text-gray-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- LOGIN SCREEN MODAL (Shown when logged out) -->
+    <div id="loginOverlay" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 max-w-md w-full overflow-hidden transition-all">
+            <div class="p-8 text-center border-b border-gray-100 dark:border-slate-700/60 bg-gradient-to-b from-brand-50 to-transparent dark:from-slate-800">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-500/30 mb-4" id="loginLogoContainer">
+                    <i class="fa-solid font-bold text-3xl fa-boxes-packing"></i>
+                </div>
+                <h2 id="loginTitle" class="text-2xl font-bold text-gray-900 dark:text-white">CYMS Online Portal</h2>
+                <p id="loginSubtitle" class="text-xs text-gray-500 dark:text-gray-400 mt-1">Container Yard Management System</p>
+            </div>
+            
+            <form id="loginForm" onsubmit="handleLogin(event)" class="p-8 space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Username</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                            <i class="fa-solid fa-user text-sm"></i>
+                        </span>
+                        <input type="text" id="loginUsername" placeholder="Enter username" required
+                            class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                            <i class="fa-solid fa-lock text-sm"></i>
+                        </span>
+                        <input type="password" id="loginPassword" placeholder="Enter password" required
+                            class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        <button type="button" onclick="togglePasswordVisibility('loginPassword', 'loginPassIcon')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                            <i id="loginPassIcon" class="fa-solid fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Default Credentials Card for Demo -->
+                <div class="p-3.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl text-xs text-amber-800 dark:text-amber-300">
+                    <p class="font-semibold flex items-center gap-1.5 mb-1">
+                        
+                    </p>
+                    <div class="flex justify-between items-center text-xs mt-1 bg-white/60 dark:bg-slate-900/40 p-1.5 rounded-lg border border-amber-200/50">
+                     
+                        
+                       
+                    </div>
+                </div>
+
+                <button type="submit" 
+                    class="w-full py-3 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-semibold rounded-xl shadow-lg shadow-brand-500/25 transition-all text-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN SYSTEM LAYOUT -->
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- SIDEBAR NAVIGATION -->
+        <aside id="sidebar" class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between transition-all duration-300 z-30 fixed md:relative h-full -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none">
+            <div>
+                <!-- Brand Header -->
+                <div class="h-16 flex items-center justify-between px-5 border-b border-slate-800/80">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div id="companyLogoNav" class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shrink-0 shadow-md">
+                            <i class="fa-solid fa-boxes-packing text-lg"></i>
+                        </div>
+                        <div class="truncate">
+                            <h1 id="companyNameNav" class="font-bold text-sm text-white tracking-wide truncate">Container Yard</h1>
+                            <p id="companyTaglineNav" class="text-[10px] text-slate-400 truncate">Online Logistics Hub</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Nav Menu Links -->
+                <nav class="p-3 space-y-1 custom-scrollbar overflow-y-auto max-h-[calc(100vh-140px)]">
+                    <a href="#dashboard" onclick="navigateTo('dashboard')" id="nav-dashboard"
+                        class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all hover:bg-slate-800 hover:text-white active">
+                        <i class="fa-solid fa-chart-line w-5 text-center text-brand-400"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#gatein" onclick="navigateTo('gatein')" id="nav-gatein"
+                        class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-truck-ramp-box w-5 text-center text-emerald-400"></i>
+                        <span>Gate In</span>
+                    </a>
+                    <a href="#gateout" onclick="navigateTo('gateout')" id="nav-gateout"
+                        class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-truck-arrow-right w-5 text-center text-indigo-400"></i>
+                        <span>Gate Out</span>
+                    </a>
+                    <a href="#inventory" onclick="navigateTo('inventory')" id="nav-inventory"
+                        class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-warehouse w-5 text-center text-amber-400"></i>
+                        <span>Container Inventory</span>
+                    </a>
+                    <a href="#reports" onclick="navigateTo('reports')" id="nav-reports"
+                        class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-file-invoice w-5 text-center text-rose-400"></i>
+                        <span>Reports</span>
+                    </a>
+                    <a href="#settings" onclick="navigateTo('settings')" id="nav-settings"
+                        class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-sliders w-5 text-center text-sky-400"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="#admin" onclick="navigateTo('admin')" id="nav-admin"
+                        class="nav-link flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-user-shield w-5 text-center text-purple-400"></i>
+                        <span>Admin Panel</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- Sidebar Footer / User Profile & Logout -->
+            <div class="p-3 border-t border-slate-800/80 bg-slate-950/50">
+                <div class="flex items-center justify-between p-2 rounded-xl bg-slate-800/50 mb-2">
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-bold uppercase" id="currentUserAvatar">
+                            A
+                        </div>
+                        <div class="truncate">
+                            <p id="currentUserName" class="text-xs font-semibold text-white truncate">Administrator</p>
+                            <span id="currentUserRole" class="inline-block text-[10px] bg-brand-500/20 text-brand-300 px-1.5 py-0.5 rounded uppercase font-semibold">Root Admin</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="w-full py-2 px-3 flex items-center justify-center gap-2 rounded-xl text-xs font-semibold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Log Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT CONTAINER -->
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+            <!-- TOPBAR HEADER -->
+            <header class="h-16 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700/80 px-4 md:px-6 flex items-center justify-between shrink-0 z-20">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="md:hidden text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white p-2">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <h2 id="pageTitle" class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <!-- Dynamic page title inserted via JS -->
+                    </h2>
+                </div>
+
+                <!-- Right Action Bar: Theme, Firebase Status, Notifications -->
+                <div class="flex items-center gap-3">
+                    <!-- Firebase Sync Indicator -->
+                    <button onclick="openFirebaseConfigModal()" title="Firebase Connection Configuration"
+                        class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/50 hover:bg-gray-100 dark:hover:bg-slate-700 transition-all">
+                        <span id="firebaseStatusDot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="firebaseStatusText" class="hidden sm:inline text-gray-600 dark:text-gray-300">Live Cloud</span>
+                    </button>
+
+                    <!-- Dark / Light Theme Toggle Button -->
+                    <button onclick="toggleTheme()" class="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors" title="Toggle Theme">
+                        <i id="themeIcon" class="fa-solid fa-moon"></i>
+                    </button>
+
+                    <!-- Notifications Bell & Dropdown -->
+                    <div class="relative">
+                        <button onclick="toggleNotificationDropdown()" class="w-9 h-9 rounded-xl flex items-center justify-center bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors relative" title="Notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 animate-bounce">0</span>
+                        </button>
+
+                        <!-- Notifications Dropdown Box -->
+                        <div id="notifDropdown" class="hidden absolute right-0 mt-2 w-80 md:w-96 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden z-50 transition-all">
+                            <div class="p-3.5 border-b border-gray-100 dark:border-slate-700/80 flex items-center justify-between bg-gray-50 dark:bg-slate-800/80">
+                                <h4 class="font-bold text-xs uppercase text-gray-700 dark:text-gray-200 flex items-center gap-2">
+                                    <i class="fa-solid fa-bell text-brand-500"></i> Yard Notifications
+                                </h4>
+                                <span id="notifCountLabel" class="text-xs bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 font-semibold px-2 py-0.5 rounded-full">0 new</span>
+                            </div>
+                            <div id="notifList" class="max-h-80 overflow-y-auto custom-scrollbar p-2 space-y-2 text-xs">
+                                <!-- Dynamic notifications list -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- MODULE CONTENT VIEWPORTS -->
+            <main class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 space-y-6">
+
+                <!-- 1. DASHBOARD MODULE -->
+                <section id="mod-dashboard" class="module-view space-y-6">
+                    <!-- Top Metric Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">In-Yard Containers</p>
+                                <h3 id="dashTotalYard" class="text-2xl font-bold text-gray-900 dark:text-white mt-1">0</h3>
+                                <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1"><i class="fa-solid fa-warehouse mr-1"></i> Currently Stored</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-boxes-stacked"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Gate In Today</p>
+                                <h3 id="dashGateInToday" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">0</h3>
+                                <p class="text-[11px] text-gray-500 mt-1"><i class="fa-solid fa-calendar-day mr-1"></i> Today's Inbound</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-truck-ramp-box"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Gate Out Today</p>
+                                <h3 id="dashGateOutToday" class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">0</h3>
+                                <p class="text-[11px] text-gray-500 mt-1"><i class="fa-solid fa-calendar-day mr-1"></i> Today's Outbound</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-truck-arrow-right"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Aging >= 3 Days</p>
+                                <h3 id="dashAgingCount" class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">0</h3>
+                                <p class="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Demurrage Alert</p>
+                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts & Quick Actions -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm">
+                            <h4 class="font-bold text-sm text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-area text-brand-500"></i> Gate In vs Gate Out Activity Trend
+                            </h4>
+                            <div class="h-64 relative">
+                                <canvas id="chartMovements"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+                            <div>
+                                <h4 class="font-bold text-sm text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-pie text-brand-500"></i> ISO Size & Type Distribution
+                                </h4>
+                                <div class="h-48 relative">
+                                    <canvas id="chartIso"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 grid grid-cols-2 gap-2">
+                                <button onclick="navigateTo('gatein')" class="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-colors">
+                                    <i class="fa-solid fa-plus"></i> New Gate In
+                                </button>
+                                <button onclick="navigateTo('gateout')" class="p-2.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-colors">
+                                    <i class="fa-solid fa-minus"></i> Release Unit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. GATE IN MODULE -->
+                <section id="mod-gatein" class="module-view hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50 flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-truck-ramp-box text-emerald-500"></i> Container Gate In Entry
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-0.5">Record new inbound container details into yard inventory.</p>
+                            </div>
+                            <span class="text-xs font-medium px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 rounded-full">Inbound Operation</span>
+                        </div>
+
+                        <form id="gateInForm" onsubmit="handleGateInSubmit(event)" class="p-6 space-y-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Container Number *</label>
+                                    <input type="text" id="giContainerNo" placeholder="e.g. MSCU1234567" required uppercase
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none uppercase">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">ISO Size / Type *</label>
+                                    <select id="giIsoType" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                        <option value="">Select ISO Type</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Shipping Line *</label>
+                                    <select id="giShippingLine" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                        <option value="">Select Line</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Consignee</label>
+                                    <input type="text" id="giConsignee" placeholder="Client or Receiver Name"
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Date & Time *</label>
+                                    <input type="datetime-local" id="giDateTime" required
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Yard Slot Location *</label>
+                                    <select id="giYardSlot" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                        <option value="">Select Yard Slot</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Gate In Driver Name *</label>
+                                    <input type="text" id="giDriver" placeholder="Driver Full Name" required
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Plate Number *</label>
+                                    <input type="text" id="giPlateNo" placeholder="e.g. ABC 1234" required uppercase
+                                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none uppercase">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1.5">Remarks / Remarks sa Baba</label>
+                                <textarea id="giRemarks" rows="2" placeholder="Add condition details, seal status, or special handling notes..."
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"></textarea>
+                            </div>
+
+                            <!-- Form Actions -->
+                            <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-700">
+                                <button type="button" onclick="resetGateInForm()" class="px-5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 text-sm font-semibold transition-colors">
+                                    <i class="fa-solid fa-rotate-left mr-1.5"></i> Cancel / Clear
+                                </button>
+                                <button type="submit" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-lg shadow-emerald-600/25 transition-all">
+                                    <i class="fa-solid fa-check mr-1.5"></i> Confirm Gate In
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- 3. GATE OUT MODULE -->
+                <section id="mod-gateout" class="module-view hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 space-y-4">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                                <h3 class="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-truck-arrow-right text-indigo-500"></i> Gate Out / Release Container
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-0.5">Search stored containers in yard to process departure release.</p>
+                            </div>
+
+                            <!-- Search Bar -->
+                            <div class="relative w-full sm:w-72">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                                    <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                                </span>
+                                <input type="text" id="goSearchInput" oninput="renderGateOutList()" placeholder="Search Container No..."
+                                    class="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Stored Containers Table -->
+                        <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-gray-100 dark:bg-slate-700/60 text-gray-700 dark:text-gray-200 uppercase font-bold border-b border-gray-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="p-3">Container Number</th>
+                                        <th class="p-3">ISO Size/Type</th>
+                                        <th class="p-3">Shipping Line</th>
+                                        <th class="p-3">Gate In Driver Name</th>
+                                        <th class="p-3">Gate In Plate Number</th>
+                                        <th class="p-3 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="goTableBody" class="divide-y divide-gray-100 dark:divide-slate-700/50">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- GATE OUT RELEASE MODAL -->
+                <div id="gateOutModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 max-w-md w-full overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-indigo-50/50 dark:bg-indigo-900/20">
+                            <h3 class="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-truck-arrow-right text-indigo-500"></i> Release Container <span id="goModalContainerNo" class="text-indigo-600 dark:text-indigo-400 font-mono"></span>
+                            </h3>
+                            <button onclick="closeGateOutModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                                <i class="fa-solid fa-xmark text-lg"></i>
+                            </button>
+                        </div>
+
+                        <form id="gateOutReleaseForm" onsubmit="confirmGateOutRelease(event)" class="p-5 space-y-4">
+                            <input type="hidden" id="goModalContainerId">
+
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1">Gate Out Driver Name *</label>
+                                <input type="text" id="goDriver" required placeholder="Driver Full Name"
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1">Gate Out Plate Number *</label>
+                                <input type="text" id="goPlateNo" required placeholder="e.g. XYZ 9876" uppercase
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1">Release Date & Time *</label>
+                                <input type="datetime-local" id="goDateTime" required
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            </div>
+
+                            <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100 dark:border-slate-700">
+                                <button type="button" onclick="closeGateOutModal()" class="px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 text-xs font-semibold">
+                                    Cancel
+                                </button>
+                                <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-md shadow-indigo-600/25">
+                                    Confirm Release
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 4. CONTAINER INVENTORY MODULE -->
+                <section id="mod-inventory" class="module-view hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 space-y-4">
+                        <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                            <div>
+                                <h3 class="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-warehouse text-amber-500"></i> Container Inventory Master List
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-0.5">Comprehensive audit log of stored and released containers.</p>
+                            </div>
+
+                            <button onclick="downloadInventoryCSV()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md flex items-center gap-2 transition-all">
+                                <i class="fa-solid fa-file-csv"></i> Download Inventory CSV
+                            </button>
+                        </div>
+
+                        <!-- Filter Controls -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-gray-50 dark:bg-slate-700/40 p-3.5 rounded-xl border border-gray-200/80 dark:border-slate-700">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">Search Container</label>
+                                <input type="text" id="invSearch" oninput="renderInventoryTable()" placeholder="Container Number..."
+                                    class="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-900 dark:text-white focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">Type of Move / Status</label>
+                                <select id="invStatusFilter" onchange="renderInventoryTable()" class="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-900 dark:text-white focus:outline-none">
+                                    <option value="ALL">All Movements</option>
+                                    <option value="Stored">Stored (In Yard)</option>
+                                    <option value="Released">Released (Gate Out)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">Date From</label>
+                                <input type="date" id="invDateFrom" onchange="renderInventoryTable()"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-900 dark:text-white focus:outline-none">
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">Date To</label>
+                                <input type="date" id="invDateTo" onchange="renderInventoryTable()"
+                                    class="w-full px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-gray-900 dark:text-white focus:outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Inventory Table -->
+                        <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700">
+                            <table class="w-full text-left border-collapse text-[11px] whitespace-nowrap">
+                                <thead class="bg-gray-100 dark:bg-slate-700/80 text-gray-700 dark:text-gray-200 uppercase font-bold border-b border-gray-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="p-2.5">Container No.</th>
+                                        <th class="p-2.5">ISO Size/Type</th>
+                                        <th class="p-2.5">Shipping Line</th>
+                                        <th class="p-2.5">Gate In Date</th>
+                                        <th class="p-2.5">Gate Out Date</th>
+                                        <th class="p-2.5">Age (Days)</th>
+                                        <th class="p-2.5">Gate In Driver</th>
+                                        <th class="p-2.5">In Plate No</th>
+                                        <th class="p-2.5">Gate Out Driver</th>
+                                        <th class="p-2.5">Out Plate No</th>
+                                        <th class="p-2.5">Status</th>
+                                        <th class="p-2.5 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invTableBody" class="divide-y divide-gray-100 dark:divide-slate-700/50">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- STATUS CORRECTION / EDIT MODAL -->
+                <div id="statusUpdateModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 max-w-sm w-full p-5 space-y-4">
+                        <h3 class="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square text-brand-500"></i> Update Container Status
+                        </h3>
+                        <p class="text-xs text-gray-500">Change status for <strong id="editModalContainerNo"></strong></p>
+
+                        <input type="hidden" id="editModalContainerId">
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Target Status</label>
+                            <select id="editModalStatusSelect" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-xs text-gray-900 dark:text-white focus:outline-none">
+                                <option value="Stored">Stored (Move Back to Yard)</option>
+                                <option value="Released">Released</option>
+                            </select>
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-2">
+                            <button onclick="closeStatusUpdateModal()" class="px-3.5 py-1.5 rounded-lg border border-gray-300 text-xs">Cancel</button>
+                            <button onclick="saveContainerStatusCorrection()" class="px-4 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-semibold">Save Status</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. REPORTS MODULE -->
+                <section id="mod-reports" class="module-view hidden space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm p-5 space-y-5">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-700 pb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-file-invoice text-rose-500"></i> Container Yard Movement Reports
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-0.5">Filter date ranges and export detailed audit logs.</p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="exportReportPDF()" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md flex items-center gap-2 transition-all">
+                                    <i class="fa-solid fa-file-pdf"></i> Download PDF
+                                </button>
+                                <button onclick="exportReportCSV()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md flex items-center gap-2 transition-all">
+                                    <i class="fa-solid fa-file-csv"></i> Download CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Date Filters -->
+                        <div class="flex flex-wrap items-center gap-4 bg-gray-50 dark:bg-slate-700/40 p-3.5 rounded-xl border border-gray-200/80 dark:border-slate-700">
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Date From:</label>
+                                <input type="date" id="repDateFrom" onchange="renderReportsTable()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs font-semibold text-gray-600 dark:text-gray-300">Date To:</label>
+                                <input type="date" id="repDateTo" onchange="renderReportsTable()" class="px-3 py-1.5 rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs">
+                            </div>
+                        </div>
+
+                        <!-- Report Summary Table -->
+                        <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-gray-100 dark:bg-slate-700/80 text-gray-700 dark:text-gray-200 uppercase font-bold border-b border-gray-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="p-3">Container No.</th>
+                                        <th class="p-3">ISO Type</th>
+                                        <th class="p-3">Shipping Line</th>
+                                        <th class="p-3">Gate In Time</th>
+                                        <th class="p-3">Gate Out Time</th>
+                                        <th class="p-3">Dwell Days</th>
+                                        <th class="p-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="repTableBody" class="divide-y divide-gray-100 dark:divide-slate-700/50">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. SETTINGS MODULE -->
+                <section id="mod-settings" class="module-view hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                        <!-- Shipping Lines Dropdown Manager -->
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm space-y-4">
+                            <h4 class="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-slate-700 pb-3">
+                                <i class="fa-solid fa-ship text-sky-500"></i> Shipping Lines
+                            </h4>
+                            <div class="flex gap-2">
+                                <input type="text" id="newShippingLineInput" placeholder="Add Line (e.g. MAERSK)" class="flex-1 px-3 py-2 text-xs rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700">
+                                <button onclick="addSettingItem('shippingLines', 'newShippingLineInput')" class="px-3 py-2 bg-sky-600 text-white rounded-xl text-xs font-semibold hover:bg-sky-700">Add</button>
+                            </div>
+                            <ul id="listShippingLines" class="divide-y divide-gray-100 dark:divide-slate-700 max-h-52 overflow-y-auto custom-scrollbar text-xs">
+                                <!-- List -->
+                            </ul>
+                        </div>
+
+                        <!-- ISO Size/Type Manager -->
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm space-y-4">
+                            <h4 class="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-slate-700 pb-3">
+                                <i class="fa-solid fa-box text-amber-500"></i> ISO Size & Type
+                            </h4>
+                            <div class="flex gap-2">
+                                <input type="text" id="newIsoTypeInput" placeholder="Add ISO (e.g. 40ft HC)" class="flex-1 px-3 py-2 text-xs rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700">
+                                <button onclick="addSettingItem('isoTypes', 'newIsoTypeInput')" class="px-3 py-2 bg-amber-600 text-white rounded-xl text-xs font-semibold hover:bg-amber-700">Add</button>
+                            </div>
+                            <ul id="listIsoTypes" class="divide-y divide-gray-100 dark:divide-slate-700 max-h-52 overflow-y-auto custom-scrollbar text-xs">
+                                <!-- List -->
+                            </ul>
+                        </div>
+
+                        <!-- Yard Slot Location Manager -->
+                        <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm space-y-4">
+                            <h4 class="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-slate-700 pb-3">
+                                <i class="fa-solid fa-location-dot text-emerald-500"></i> Yard Slot Locations
+                            </h4>
+                            <div class="flex gap-2">
+                                <input type="text" id="newYardSlotInput" placeholder="Add Slot (e.g. Zone A-01)" class="flex-1 px-3 py-2 text-xs rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700">
+                                <button onclick="addSettingItem('yardSlots', 'newYardSlotInput')" class="px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs font-semibold hover:bg-emerald-700">Add</button>
+                            </div>
+                            <ul id="listYardSlots" class="divide-y divide-gray-100 dark:divide-slate-700 max-h-52 overflow-y-auto custom-scrollbar text-xs">
+                                <!-- List -->
+                            </ul>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 7. ADMIN PANEL MODULE -->
+                <section id="mod-admin" class="module-view hidden space-y-6">
+                    <!-- Company Profile Branding Setup -->
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm space-y-4">
+                        <h3 class="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2 border-b border-gray-100 dark:border-slate-700 pb-3">
+                            <i class="fa-solid fa-building text-purple-500"></i> Company Profile & Logo Branding
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Company Name</label>
+                                <input type="text" id="adminCompName" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Tagline</label>
+                                <input type="text" id="adminCompTagline" class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Logo URL or Image Link</label>
+                                <input type="text" id="adminCompLogoUrl" placeholder="https://..." class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-xs">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                            <button onclick="saveCompanyProfile()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-md">
+                                Save Company Profile
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- User Management Table & Form -->
+                    <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-gray-100 dark:border-slate-700 pb-3">
+                            <h3 class="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-users-gear text-purple-500"></i> User Accounts & Role Permissions
+                            </h3>
+                            <button onclick="openUserModal()" class="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl shadow-md">
+                                <i class="fa-solid fa-user-plus mr-1"></i> Add New User
+                            </button>
+                        </div>
+
+                        <!-- Users Table -->
+                        <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-slate-700">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-gray-100 dark:bg-slate-700/80 text-gray-700 dark:text-gray-200 uppercase font-bold border-b border-gray-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="p-3">Username</th>
+                                        <th class="p-3">System Role</th>
+                                        <th class="p-3">Module Permissions Access</th>
+                                        <th class="p-3 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody" class="divide-y divide-gray-100 dark:divide-slate-700/50">
+                                    <!-- Dynamic User Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- USER ADD / EDIT MODAL -->
+    <div id="userModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 max-w-lg w-full overflow-hidden">
+            <div class="p-4 border-b border-gray-100 dark:border-slate-700 flex justify-between items-center bg-purple-50 dark:bg-purple-900/20">
+                <h3 id="userModalTitle" class="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-purple-500"></i> Add New User
+                </h3>
+                <button onclick="closeUserModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="userAccountForm" onsubmit="saveUserAccount(event)" class="p-5 space-y-4">
+                <input type="hidden" id="editUserId">
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1">Username *</label>
+                    <input type="text" id="modalUsername" required
+                        class="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-xs text-gray-900 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1">Password *</label>
+                    <div class="relative">
+                        <input type="password" id="modalPassword" required
+                            class="w-full px-3.5 py-2 pr-10 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-xs text-gray-900 dark:text-white">
+                        <button type="button" onclick="togglePasswordVisibility('modalPassword', 'userModalPassIcon')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">
+                            <i id="userModalPassIcon" class="fa-solid fa-eye text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-1">Role *</label>
+                    <select id="modalRole" onchange="handleRoleSelectionChange()" class="w-full px-3.5 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-xs text-gray-900 dark:text-white">
+                        <option value="Yard User">Yard User</option>
+                        <option value="Yard Admin">Yard Admin</option>
+                    </select>
+                </div>
+
+                <!-- Custom Module Permissions Matrix -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-600 dark:text-gray-300 mb-2">Module Access Permissions</label>
+                    <div class="grid grid-cols-2 gap-2 text-xs bg-gray-50 dark:bg-slate-700/40 p-3 rounded-xl border border-gray-200 dark:border-slate-700">
+                        <label class="flex items-center gap-2"><input type="checkbox" id="perm-dashboard" checked class="rounded text-brand-600"> Dashboard</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" id="perm-gatein" checked class="rounded text-brand-600"> Gate In</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" id="perm-gateout" checked class="rounded text-brand-600"> Gate Out</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" id="perm-inventory" checked class="rounded text-brand-600"> Inventory</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" id="perm-reports" checked class="rounded text-brand-600"> Reports</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" id="perm-settings" class="rounded text-brand-600"> Settings</label>
+                        <label class="flex items-center gap-2"><input type="checkbox" id="perm-admin" class="rounded text-brand-600"> Admin Panel</label>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100 dark:border-slate-700">
+                    <button type="button" onclick="closeUserModal()" class="px-4 py-2 border border-gray-300 text-xs rounded-xl">Cancel</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl">Save User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FIREBASE SETUP INSTRUCTION MODAL -->
+    <div id="firebaseConfigModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 max-w-xl w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-gray-100 dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-base text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-cloud text-brand-500"></i> Firebase Database Setup Instructions
+                </h3>
+                <button onclick="closeFirebaseModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="text-xs space-y-3 text-gray-600 dark:text-gray-300 custom-scrollbar max-h-96 overflow-y-auto">
+                <p>To connect this app to real-time online storage accessible anywhere, follow these steps:</p>
+                <ol class="list-decimal list-inside space-y-2 font-medium">
+                    <li>Go to <a href="https://console.firebase.google.com/" target="_blank" class="text-brand-600 underline">Firebase Console</a> and create a new project.</li>
+                    <li>Add a Web App to your project and copy your <code>firebaseConfig</code> credentials.</li>
+                    <li>In your Firebase project navigation, go to <strong>Firestore Database</strong> and click <strong>Create Database</strong>.</li>
+                    <li>Set rules to allow read/write or start in <code>test mode</code> for deployment testing.</li>
+                    <li>Paste your JSON config into the field below to connect instantly:</li>
+                </ol>
+
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-gray-600 dark:text-gray-300 mb-1">Firebase Config Object (JSON)</label>
+                    <textarea id="customFirebaseConfig" rows="4" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}'
+                        class="w-full px-3 py-2 rounded-xl border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-900 font-mono text-[11px]"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-slate-700">
+                <button onclick="closeFirebaseModal()" class="px-4 py-2 border border-gray-300 rounded-xl text-xs">Close</button>
+                <button onclick="applyCustomFirebaseConfig()" class="px-4 py-2 bg-brand-600 text-white rounded-xl text-xs font-semibold">Save Config & Reconnect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- SYSTEM SCRIPTING -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // APP STATE & STORAGE
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'cyms-default-app';
+        let firebaseConfig = null;
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try { firebaseConfig = JSON.parse(__firebase_config); } catch(e){}
+        }
+
+        let app, db, auth;
+        let currentUser = null;
+        let chartInstanceMovements = null;
+        let chartInstanceIso = null;
+
+        // Default In-Memory Initial Data
+        let appState = {
+            company: {
+                name: "Container Yard Logistics",
+                tagline: "Online Management System",
+                logoUrl: ""
+            },
+            settings: {
+                shippingLines: ["MAERSK", "MSC", "CMA CGM", "COSCO", "EVERGREEN", "ONE"],
+                isoTypes: ["20ft GP Standard", "40ft GP Standard", "40ft High Cube (HC)", "45ft High Cube", "20ft Reefer", "40ft Reefer"],
+                yardSlots: ["Slot A-01", "Slot A-02", "Slot B-01", "Slot B-02", "Slot C-01", "Slot C-02", "Reefer Bay 01"]
+            },
+            users: [
+                {
+                    id: "usr_root",
+                    username: "admin",
+                    password: "L!|5!mtO30SJ$P!X}r&-",
+                    role: "Root Admin",
+                    permissions: ["dashboard", "gatein", "gateout", "inventory", "reports", "settings", "admin"]
+                },
+                {
+                    id: "usr_yard_admin",
+                    username: "yardadmin",
+                    password: "user123",
+                    role: "Yard Admin",
+                    permissions: ["dashboard", "gatein", "gateout", "inventory", "reports", "settings"]
+                },
+                {
+                    id: "usr_yard_user",
+                    username: "gateuser",
+                    password: "user123",
+                    role: "Yard User",
+                    permissions: ["dashboard", "gatein", "gateout", "inventory"]
+                }
+            ],
+            containers: [
+                {
+                    id: "cont_101",
+                    containerNo: "MSCU1234567",
+                    isoType: "40ft High Cube (HC)",
+                    shippingLine: "MSC",
+                    consignee: "Universal Imports Corp",
+                    gateInDateTime: new Date(Date.now() - (4 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 16),
+                    gateOutDateTime: "",
+                    gateInDriver: "Juan Dela Cruz",
+                    gateInPlateNo: "ABC 1234",
+                    gateOutDriver: "",
+                    gateOutPlateNo: "",
+                    yardSlot: "Slot A-01",
+                    remarks: "Empty container return. Inspection clean.",
+                    status: "Stored"
+                },
+                {
+                    id: "cont_102",
+                    containerNo: "MAEU9876543",
+                    isoType: "20ft GP Standard",
+                    shippingLine: "MAERSK",
+                    consignee: "Global Cargo Ltd",
+                    gateInDateTime: new Date(Date.now() - (1 * 24 * 60 * 60 * 1000)).toISOString().slice(0, 16),
+                    gateOutDateTime: "",
+                    gateInDriver: "Mario Santos",
+                    gateInPlateNo: "XYZ 9876",
+                    gateOutDriver: "",
+                    gateOutPlateNo: "",
+                    yardSlot: "Slot B-02",
+                    remarks: "Slight scratches right side panel.",
+                    status: "Stored"
+                }
+            ],
+            notifications: []
+        };
+
+        // INITIALIZATION
+        window.addEventListener('DOMContentLoaded', async () => {
+            initFirebase();
+            loadLocalStateFallback();
+            setupTheme();
+            setDefaultDates();
+            renderSettingsDropdowns();
+            renderCompanyBranding();
+        });
+
+        // FIREBASE CONNECT
+        async function initFirebase() {
+            const statusDot = document.getElementById('firebaseStatusDot');
+            const statusText = document.getElementById('firebaseStatusText');
+
+            if (firebaseConfig && firebaseConfig.apiKey) {
+                try {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                    statusText.innerText = "Firebase Live";
+                    listenFirestoreData();
+                } catch(err) {
+                    console.warn("Firebase Auth fallback:", err);
+                    statusDot.className = "w-2 h-2 rounded-full bg-amber-500";
+                    statusText.innerText = "Local Sync Mode";
+                }
+            } else {
+                statusDot.className = "w-2 h-2 rounded-full bg-amber-500";
+                statusText.innerText = "Local Memory";
+            }
+        }
+
+        // Firestore Realtime Listener
+        function listenFirestoreData() {
+            if (!db) return;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'cyms_state');
+            
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.state) {
+                        appState = JSON.parse(data.state);
+                        refreshAllUI();
+                    }
+                } else {
+                    saveStateToFirestore();
+                }
+            }, (error) => {
+                console.warn("Firestore snapshot error:", error);
+            });
+        }
+
+        // Save State Sync Function
+        async function saveState() {
+            localStorage.setItem('cyms_local_state', JSON.stringify(appState));
+            await saveStateToFirestore();
+            refreshAllUI();
+        }
+
+        async function saveStateToFirestore() {
+            if (!db) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'cyms_state');
+                await setDoc(docRef, { state: JSON.stringify(appState), updatedAt: new Date().toISOString() });
+            } catch(e) {
+                console.warn("Firestore Sync Error:", e);
+            }
+        }
+
+        function loadLocalStateFallback() {
+            const local = localStorage.getItem('cyms_local_state');
+            if (local) {
+                try {
+                    appState = JSON.parse(local);
+                } catch(e){}
+            }
+        }
+
+        // GLOBAL UI REFRESH
+        function refreshAllUI() {
+            renderCompanyBranding();
+            renderSettingsDropdowns();
+            renderDashboard();
+            renderGateOutList();
+            renderInventoryTable();
+            renderReportsTable();
+            renderUsersTable();
+            checkContainerAgingNotifications();
+        }
+
+        // AUTHENTICATION LOGIC
+        window.handleLogin = function(e) {
+            e.preventDefault();
+            const uInput = document.getElementById('loginUsername').value.trim();
+            const pInput = document.getElementById('loginPassword').value.trim();
+
+            const foundUser = appState.users.find(u => u.username.toLowerCase() === uInput.toLowerCase() && u.password === pInput);
+
+            if (foundUser) {
+                currentUser = foundUser;
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('currentUserName').innerText = currentUser.username;
+                document.getElementById('currentUserRole').innerText = currentUser.role;
+                document.getElementById('currentUserAvatar').innerText = currentUser.username.charAt(0).toUpperCase();
+
+                applyUserPermissions();
+                showToast(`Welcome back, ${currentUser.username}!`, 'success');
+                refreshAllUI();
+            } else {
+                showToast("Invalid username or password credentials.", "error");
+            }
+
+            return false;
+        };
+
+        window.handleLogout = function() {
+            currentUser = null;
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginOverlay').classList.remove('hidden');
+            showToast("Logged out successfully.", "info");
+        };
+
+        window.fillAdminCredentials = function() {
+            document.getElementById('loginUsername').value = 'admin';
+            document.getElementById('loginPassword').value = 'L!|5!mtO30SJ$P!X}r&-';
+        };
+
+        function applyUserPermissions() {
+            if (!currentUser) return;
+            
+            const allNavs = ['dashboard', 'gatein', 'gateout', 'inventory', 'reports', 'settings', 'admin'];
+            
+            allNavs.forEach(mod => {
+                const navElem = document.getElementById(`nav-${mod}`);
+                if (navElem) {
+                    if (currentUser.role === 'Root Admin' || (currentUser.permissions && currentUser.permissions.includes(mod))) {
+                        navElem.classList.remove('hidden');
+                    } else {
+                        navElem.classList.add('hidden');
+                    }
+                }
+            });
+
+            // Default route to dashboard
+            navigateTo('dashboard');
+        }
+
+        // NAVIGATION ROUTER
+        window.navigateTo = function(targetModule) {
+            if (currentUser && currentUser.role !== 'Root Admin' && currentUser.permissions && !currentUser.permissions.includes(targetModule)) {
+                showToast("Access Denied: You don't have permission for this module.", "error");
+                return;
+            }
+
+            document.querySelectorAll('.module-view').forEach(m => m.classList.add('hidden'));
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active', 'bg-slate-800', 'text-white'));
+
+            const targetView = document.getElementById(`mod-${targetModule}`);
+            const targetNav = document.getElementById(`nav-${targetModule}`);
+
+            if (targetView) targetView.classList.remove('hidden');
+            if (targetNav) targetNav.classList.add('active', 'bg-slate-800', 'text-white');
+
+            const pageTitleElem = document.getElementById('pageTitle');
+            const titles = {
+                dashboard: '<i class="fa-solid fa-chart-line text-brand-500"></i> CYMS Executive Dashboard',
+                gatein: '<i class="fa-solid fa-truck-ramp-box text-emerald-500"></i> Container Gate In Entry',
+                gateout: '<i class="fa-solid fa-truck-arrow-right text-indigo-500"></i> Gate Out / Departure Release',
+                inventory: '<i class="fa-solid fa-warehouse text-amber-500"></i> Container Yard Inventory',
+                reports: '<i class="fa-solid fa-file-invoice text-rose-500"></i> Movement Audit Reports',
+                settings: '<i class="fa-solid fa-sliders text-sky-500"></i> System Configuration Settings',
+                admin: '<i class="fa-solid fa-user-shield text-purple-500"></i> Admin Panel & Company Profile'
+            };
+            pageTitleElem.innerHTML = titles[targetModule] || 'CYMS Module';
+
+            // Auto-close responsive mobile sidebar
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            
+            if (targetModule === 'dashboard') renderDashboardCharts();
+        };
+
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        };
+
+        // THEME MANAGEMENT
+        window.toggleTheme = function() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                icon.className = "fa-solid fa-moon";
+                localStorage.setItem('cyms_theme', 'light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                icon.className = "fa-solid fa-sun text-amber-400";
+                localStorage.setItem('cyms_theme', 'dark');
+            }
+            renderDashboardCharts();
+        };
+
+        function setupTheme() {
+            const savedTheme = localStorage.getItem('cyms_theme') || 'light';
+            const icon = document.getElementById('themeIcon');
+            if (savedTheme === 'dark') {
+                document.documentElement.classList.remove('light');
+                document.documentElement.classList.add('dark');
+                icon.className = "fa-solid fa-sun text-amber-400";
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+                icon.className = "fa-solid fa-moon";
+            }
+        }
+
+        // AGING CALCULATION (DAYS)
+        function calculateContainerAge(gateInDateStr, gateOutDateStr) {
+            if (!gateInDateStr) return 0;
+            const start = new Date(gateInDateStr);
+            const end = gateOutDateStr ? new Date(gateOutDateStr) : new Date();
+            const diffMs = Math.max(0, end - start);
+            return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        }
+
+        // NOTIFICATION MANAGEMENT & AGING ALERT
+        function checkContainerAgingNotifications() {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const agingContainers = appState.containers.filter(c => c.status === 'Stored' && calculateContainerAge(c.gateInDateTime) >= 3);
+            
+            let notifications = [];
+
+            // Add Aging Alerts
+            agingContainers.forEach(c => {
+                const age = calculateContainerAge(c.gateInDateTime);
+                notifications.push({
+                    type: 'aging',
+                    title: `Demurrage Alert: ${c.containerNo}`,
+                    desc: `In yard for ${age} days (${c.shippingLine} / ${c.yardSlot})`,
+                    time: 'Overdue (>= 3 Days)',
+                    color: 'text-amber-500'
+                });
+            });
+
+            // Recent Gate In
+            appState.containers.filter(c => c.gateInDateTime.slice(0, 10) === todayStr).forEach(c => {
+                notifications.push({
+                    type: 'gatein',
+                    title: `Gate In: ${c.containerNo}`,
+                    desc: `${c.isoType} - Slot: ${c.yardSlot}`,
+                    time: c.gateInDateTime.slice(11, 16),
+                    color: 'text-emerald-500'
+                });
+            });
+
+            // Recent Gate Out
+            appState.containers.filter(c => c.status === 'Released' && c.gateOutDateTime && c.gateOutDateTime.slice(0, 10) === todayStr).forEach(c => {
+                notifications.push({
+                    type: 'gateout',
+                    title: `Released: ${c.containerNo}`,
+                    desc: `Driver: ${c.gateOutDriver}`,
+                    time: c.gateOutDateTime.slice(11, 16),
+                    color: 'text-indigo-500'
+                });
+            });
+
+            appState.notifications = notifications;
+            
+            // Update UI Badge
+            const badge = document.getElementById('notifBadge');
+            const countLabel = document.getElementById('notifCountLabel');
+            const notifList = document.getElementById('notifList');
+
+            if (notifications.length > 0) {
+                badge.classList.remove('hidden');
+                badge.innerText = notifications.length;
+                countLabel.innerText = `${notifications.length} alerts`;
+            } else {
+                badge.classList.add('hidden');
+                countLabel.innerText = "0 alerts";
+            }
+
+            notifList.innerHTML = notifications.length === 0 ? `
+                <div class="text-center py-6 text-gray-400">
+                    <i class="fa-solid fa-bell-slash text-2xl mb-1"></i>
+                    <p>No active yard alerts</p>
+                </div>
+            ` : notifications.map(n => `
+                <div class="p-2.5 rounded-xl bg-gray-50 dark:bg-slate-700/50 border border-gray-100 dark:border-slate-700 flex items-start gap-2.5">
+                    <i class="fa-solid fa-circle-exclamation ${n.color} mt-0.5"></i>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center">
+                            <h5 class="font-bold text-gray-800 dark:text-gray-100 truncate text-[11px]">${n.title}</h5>
+                            <span class="text-[10px] text-gray-400 shrink-0">${n.time}</span>
+                        </div>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400 truncate">${n.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.toggleNotificationDropdown = function() {
+            document.getElementById('notifDropdown').classList.toggle('hidden');
+        };
+
+        // DASHBOARD MODULE LOGIC
+        function renderDashboard() {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            
+            const stored = appState.containers.filter(c => c.status === 'Stored');
+            const gateInToday = appState.containers.filter(c => c.gateInDateTime && c.gateInDateTime.slice(0, 10) === todayStr);
+            const gateOutToday = appState.containers.filter(c => c.status === 'Released' && c.gateOutDateTime && c.gateOutDateTime.slice(0, 10) === todayStr);
+            const aging3Days = stored.filter(c => calculateContainerAge(c.gateInDateTime) >= 3);
+
+            document.getElementById('dashTotalYard').innerText = stored.length;
+            document.getElementById('dashGateInToday').innerText = gateInToday.length;
+            document.getElementById('dashGateOutToday').innerText = gateOutToday.length;
+            document.getElementById('dashAgingCount').innerText = aging3Days.length;
+
+            renderDashboardCharts();
+        }
+
+        function renderDashboardCharts() {
+            // Activity Movement Trend Chart
+            const ctx1 = document.getElementById('chartMovements')?.getContext('2d');
+            if (ctx1) {
+                if (chartInstanceMovements) chartInstanceMovements.destroy();
+
+                const isDark = document.documentElement.classList.contains('dark');
+                const textColor = isDark ? '#94a3b8' : '#64748b';
+
+                chartInstanceMovements = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [
+                            {
+                                label: 'Gate In',
+                                data: [12, 19, 15, 25, 22, 30, appState.containers.length],
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Gate Out',
+                                data: [8, 12, 10, 18, 20, 22, appState.containers.filter(c => c.status==='Released').length],
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: textColor, font: { size: 11 } } } },
+                        scales: {
+                            x: { ticks: { color: textColor }, grid: { display: false } },
+                            y: { ticks: { color: textColor }, grid: { color: isDark ? '#334155' : '#e2e8f0' } }
+                        }
+                    }
+                });
+            }
+
+            // ISO Distribution Pie Chart
+            const ctx2 = document.getElementById('chartIso')?.getContext('2d');
+            if (ctx2) {
+                if (chartInstanceIso) chartInstanceIso.destroy();
+
+                const isoCounts = {};
+                appState.containers.forEach(c => {
+                    isoCounts[c.isoType] = (isoCounts[c.isoType] || 0) + 1;
+                });
+
+                chartInstanceIso = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(isoCounts).length ? Object.keys(isoCounts) : ['20ft GP', '40ft HC'],
+                        datasets: [{
+                            data: Object.values(isoCounts).length ? Object.values(isoCounts) : [1, 1],
+                            backgroundColor: ['#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+                    }
+                });
+            }
+        }
+
+        // GATE IN FORM HANDLING
+        window.handleGateInSubmit = async function(e) {
+            e.preventDefault();
+            
+            const newCont = {
+                id: 'cont_' + Date.now(),
+                containerNo: document.getElementById('giContainerNo').value.trim().toUpperCase(),
+                isoType: document.getElementById('giIsoType').value,
+                shippingLine: document.getElementById('giShippingLine').value,
+                consignee: document.getElementById('giConsignee').value.trim(),
+                gateInDateTime: document.getElementById('giDateTime').value,
+                gateOutDateTime: "",
+                gateInDriver: document.getElementById('giDriver').value.trim(),
+                gateInPlateNo: document.getElementById('giPlateNo').value.trim().toUpperCase(),
+                gateOutDriver: "",
+                gateOutPlateNo: "",
+                yardSlot: document.getElementById('giYardSlot').value,
+                remarks: document.getElementById('giRemarks').value.trim(),
+                status: "Stored"
+            };
+
+            // Duplicate active container check
+            const exists = appState.containers.find(c => c.containerNo === newCont.containerNo && c.status === 'Stored');
+            if (exists) {
+                showToast(`Container ${newCont.containerNo} is already stored in yard (${exists.yardSlot})!`, "error");
+                return false;
+            }
+
+            appState.containers.unshift(newCont);
+            await saveState();
+            
+            resetGateInForm();
+            showToast(`Container ${newCont.containerNo} successfully Gated In!`, "success");
+            navigateTo('inventory');
+            return false;
+        };
+
+        window.resetGateInForm = function() {
+            document.getElementById('gateInForm').reset();
+            setDefaultDates();
+        };
+
+        // GATE OUT / RELEASE MODULE
+        function renderGateOutList() {
+            const query = (document.getElementById('goSearchInput')?.value || '').toLowerCase();
+            const tbody = document.getElementById('goTableBody');
+            if (!tbody) return;
+
+            const storedList = appState.containers.filter(c => c.status === 'Stored' && 
+                (c.containerNo.toLowerCase().includes(query) || c.shippingLine.toLowerCase().includes(query))
+            );
+
+            if (storedList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">No matching stored containers ready for release.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = storedList.map(c => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/40 border-b border-gray-100 dark:border-slate-700/50">
+                    <td class="p-3 font-bold text-brand-600 dark:text-brand-400 font-mono">${c.containerNo}</td>
+                    <td class="p-3">${c.isoType}</td>
+                    <td class="p-3 font-semibold">${c.shippingLine}</td>
+                    <td class="p-3">${c.gateInDriver}</td>
+                    <td class="p-3 font-mono">${c.gateInPlateNo}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="openGateOutModal('${c.id}')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-md transition-all">
+                            <i class="fa-solid fa-truck-arrow-right mr-1"></i> Release
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.openGateOutModal = function(id) {
+            const c = appState.containers.find(x => x.id === id);
+            if (!c) return;
+
+            document.getElementById('goModalContainerId').value = c.id;
+            document.getElementById('goModalContainerNo').innerText = c.containerNo;
+            document.getElementById('goDriver').value = '';
+            document.getElementById('goPlateNo').value = '';
+            document.getElementById('goDateTime').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('gateOutModal').classList.remove('hidden');
+        };
+
+        window.closeGateOutModal = function() {
+            document.getElementById('gateOutModal').classList.add('hidden');
+        };
+
+        window.confirmGateOutRelease = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('goModalContainerId').value;
+            const c = appState.containers.find(x => x.id === id);
+
+            if (c) {
+                c.gateOutDriver = document.getElementById('goDriver').value.trim();
+                c.gateOutPlateNo = document.getElementById('goPlateNo').value.trim().toUpperCase();
+                c.gateOutDateTime = document.getElementById('goDateTime').value;
+                c.status = 'Released';
+
+                await saveState();
+                closeGateOutModal();
+                showToast(`Container ${c.containerNo} released successfully!`, "success");
+            }
+            return false;
+        };
+
+        // INVENTORY MASTER LIST
+        function renderInventoryTable() {
+            const tbody = document.getElementById('invTableBody');
+            if (!tbody) return;
+
+            const search = (document.getElementById('invSearch')?.value || '').toLowerCase();
+            const statusFilter = document.getElementById('invStatusFilter')?.value || 'ALL';
+            const dateFrom = document.getElementById('invDateFrom')?.value;
+            const dateTo = document.getElementById('invDateTo')?.value;
+
+            let filtered = appState.containers.filter(c => {
+                const matchSearch = c.containerNo.toLowerCase().includes(search) || c.shippingLine.toLowerCase().includes(search);
+                const matchStatus = statusFilter === 'ALL' ? true : c.status === statusFilter;
+                
+                let matchDate = true;
+                if (dateFrom && c.gateInDateTime.slice(0, 10) < dateFrom) matchDate = false;
+                if (dateTo && c.gateInDateTime.slice(0, 10) > dateTo) matchDate = false;
+
+                return matchSearch && matchStatus && matchDate;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="12" class="text-center py-6 text-gray-400">No inventory records found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(c => {
+                const age = calculateContainerAge(c.gateInDateTime, c.gateOutDateTime);
+                const isOverdue = c.status === 'Stored' && age >= 3;
+
+                return `
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/40 border-b border-gray-100 dark:border-slate-700/50">
+                    <td class="p-2.5 font-bold font-mono text-brand-600 dark:text-brand-400">${c.containerNo}</td>
+                    <td class="p-2.5">${c.isoType}</td>
+                    <td class="p-2.5 font-semibold">${c.shippingLine}</td>
+                    <td class="p-2.5">${c.gateInDateTime.replace('T', ' ')}</td>
+                    <td class="p-2.5">${c.gateOutDateTime ? c.gateOutDateTime.replace('T', ' ') : '-'}</td>
+                    <td class="p-2.5 font-bold ${isOverdue ? 'text-rose-500 flex items-center gap-1' : ''}">
+                        ${age} Days ${isOverdue ? '<i class="fa-solid fa-triangle-exclamation" title="Demurrage Alert"></i>' : ''}
+                    </td>
+                    <td class="p-2.5">${c.gateInDriver || '-'}</td>
+                    <td class="p-2.5 font-mono">${c.gateInPlateNo || '-'}</td>
+                    <td class="p-2.5">${c.gateOutDriver || '-'}</td>
+                    <td class="p-2.5 font-mono">${c.gateOutPlateNo || '-'}</td>
+                    <td class="p-2.5">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${c.status === 'Stored' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}">
+                            ${c.status}
+                        </span>
+                    </td>
+                    <td class="p-2.5 text-center">
+                        <button onclick="openStatusUpdateModal('${c.id}')" class="p-1 px-2 text-brand-600 hover:bg-brand-50 rounded" title="Edit / Correct Status">
+                            <i class="fa-solid fa-pen-to-square"></i> Update
+                        </button>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        window.openStatusUpdateModal = function(id) {
+            const c = appState.containers.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('editModalContainerId').value = c.id;
+            document.getElementById('editModalContainerNo').innerText = c.containerNo;
+            document.getElementById('editModalStatusSelect').value = c.status;
+            document.getElementById('statusUpdateModal').classList.remove('hidden');
+        };
+
+        window.closeStatusUpdateModal = function() {
+            document.getElementById('statusUpdateModal').classList.add('hidden');
+        };
+
+        window.saveContainerStatusCorrection = async function() {
+            const id = document.getElementById('editModalContainerId').value;
+            const newStatus = document.getElementById('editModalStatusSelect').value;
+            const c = appState.containers.find(x => x.id === id);
+
+            if (c) {
+                c.status = newStatus;
+                if (newStatus === 'Stored') {
+                    c.gateOutDateTime = "";
+                    c.gateOutDriver = "";
+                    c.gateOutPlateNo = "";
+                }
+                await saveState();
+                closeStatusUpdateModal();
+                showToast(`Container status updated to ${newStatus}`, "info");
+            }
+        };
+
+        window.downloadInventoryCSV = function() {
+            let csv = "Container No,ISO Type,Shipping Line,Gate In Date,Gate Out Date,Age (Days),Gate In Driver,Gate In Plate,Gate Out Driver,Gate Out Plate,Status\n";
+            appState.containers.forEach(c => {
+                const age = calculateContainerAge(c.gateInDateTime, c.gateOutDateTime);
+                csv += `"${c.containerNo}","${c.isoType}","${c.shippingLine}","${c.gateInDateTime}","${c.gateOutDateTime}","${age}","${c.gateInDriver}","${c.gateInPlateNo}","${c.gateOutDriver}","${c.gateOutPlateNo}","${c.status}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Container_Inventory_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+        };
+
+        // REPORTS MODULE
+        function renderReportsTable() {
+            const tbody = document.getElementById('repTableBody');
+            if (!tbody) return;
+
+            const from = document.getElementById('repDateFrom')?.value;
+            const to = document.getElementById('repDateTo')?.value;
+
+            let filtered = appState.containers.filter(c => {
+                const date = c.gateInDateTime.slice(0, 10);
+                if (from && date < from) return false;
+                if (to && date > to) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-400">No movements recorded in date range.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(c => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/40 border-b border-gray-100 dark:border-slate-700/50">
+                    <td class="p-3 font-bold font-mono text-brand-600 dark:text-brand-400">${c.containerNo}</td>
+                    <td class="p-3">${c.isoType}</td>
+                    <td class="p-3 font-semibold">${c.shippingLine}</td>
+                    <td class="p-3">${c.gateInDateTime.replace('T', ' ')}</td>
+                    <td class="p-3">${c.gateOutDateTime ? c.gateOutDateTime.replace('T', ' ') : '-'}</td>
+                    <td class="p-3 font-bold">${calculateContainerAge(c.gateInDateTime, c.gateOutDateTime)} Days</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${c.status==='Stored'?'bg-emerald-100 text-emerald-700':'bg-slate-200 text-slate-700'}">${c.status}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        window.exportReportCSV = function() {
+            let csv = "Container No,ISO Type,Shipping Line,Gate In Time,Gate Out Time,Dwell Days,Status\n";
+            appState.containers.forEach(c => {
+                csv += `"${c.containerNo}","${c.isoType}","${c.shippingLine}","${c.gateInDateTime}","${c.gateOutDateTime}","${calculateContainerAge(c.gateInDateTime, c.gateOutDateTime)}","${c.status}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CYMS_Movement_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+        };
+
+        window.exportReportPDF = function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(16);
+            doc.text(appState.company.name || "Container Yard Management System", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Movement Report - Generated ${new Date().toLocaleString()}`, 14, 22);
+
+            const tableData = appState.containers.map(c => [
+                c.containerNo,
+                c.isoType,
+                c.shippingLine,
+                c.gateInDateTime.replace('T', ' '),
+                c.gateOutDateTime ? c.gateOutDateTime.replace('T', ' ') : 'Stored',
+                `${calculateContainerAge(c.gateInDateTime, c.gateOutDateTime)} d`,
+                c.status
+            ]);
+
+            doc.autoTable({
+                startY: 28,
+                head: [['Container No', 'ISO Type', 'Line', 'Gate In', 'Gate Out', 'Age', 'Status']],
+                body: tableData,
+                theme: 'striped',
+                headStyles: { fillColor: [2, 132, 199] }
+            });
+
+            doc.save(`CYMS_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+        };
+
+        // SETTINGS MODULE LOGIC
+        function renderSettingsDropdowns() {
+            // Shipping Lines Selects & List
+            const giLine = document.getElementById('giShippingLine');
+            if (giLine) {
+                giLine.innerHTML = `<option value="">Select Line</option>` + appState.settings.shippingLines.map(l => `<option value="${l}">${l}</option>`).join('');
+            }
+            document.getElementById('listShippingLines').innerHTML = appState.settings.shippingLines.map((item, idx) => `
+                <li class="py-2 flex justify-between items-center">
+                    <span>${item}</span>
+                    <button onclick="deleteSettingItem('shippingLines', ${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                </li>
+            `).join('');
+
+            // ISO Types
+            const giIso = document.getElementById('giIsoType');
+            if (giIso) {
+                giIso.innerHTML = `<option value="">Select ISO Type</option>` + appState.settings.isoTypes.map(i => `<option value="${i}">${i}</option>`).join('');
+            }
+            document.getElementById('listIsoTypes').innerHTML = appState.settings.isoTypes.map((item, idx) => `
+                <li class="py-2 flex justify-between items-center">
+                    <span>${item}</span>
+                    <button onclick="deleteSettingItem('isoTypes', ${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                </li>
+            `).join('');
+
+            // Yard Slots
+            const giSlot = document.getElementById('giYardSlot');
+            if (giSlot) {
+                giSlot.innerHTML = `<option value="">Select Yard Slot</option>` + appState.settings.yardSlots.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+            document.getElementById('listYardSlots').innerHTML = appState.settings.yardSlots.map((item, idx) => `
+                <li class="py-2 flex justify-between items-center">
+                    <span>${item}</span>
+                    <button onclick="deleteSettingItem('yardSlots', ${idx})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                </li>
+            `).join('');
+        }
+
+        window.addSettingItem = async function(key, inputId) {
+            const val = document.getElementById(inputId).value.trim();
+            if (!val) return;
+            if (!appState.settings[key].includes(val)) {
+                appState.settings[key].push(val);
+                await saveState();
+                document.getElementById(inputId).value = '';
+                showToast(`Item added to ${key}`, "success");
+            }
+        };
+
+        window.deleteSettingItem = async function(key, index) {
+            appState.settings[key].splice(index, 1);
+            await saveState();
+            showToast("Item deleted", "info");
+        };
+
+        // ADMIN PANEL & USER MANAGEMENT
+        function renderCompanyBranding() {
+            document.getElementById('companyNameNav').innerText = appState.company.name || "Container Yard";
+            document.getElementById('companyTaglineNav').innerText = appState.company.tagline || "Online Logistics Hub";
+            document.getElementById('adminCompName').value = appState.company.name || "";
+            document.getElementById('adminCompTagline').value = appState.company.tagline || "";
+            document.getElementById('adminCompLogoUrl').value = appState.company.logoUrl || "";
+
+            if (appState.company.logoUrl) {
+                document.getElementById('companyLogoNav').innerHTML = `<img src="${appState.company.logoUrl}" class="w-full h-full object-cover rounded-xl" onerror="this.onerror=null; this.src=''; this.innerHTML='<i class=\'fa-solid fa-boxes-packing\'></i>'">`;
+            }
+        }
+
+        window.saveCompanyProfile = async function() {
+            appState.company.name = document.getElementById('adminCompName').value.trim();
+            appState.company.tagline = document.getElementById('adminCompTagline').value.trim();
+            appState.company.logoUrl = document.getElementById('adminCompLogoUrl').value.trim();
+            await saveState();
+            showToast("Company profile updated successfully!", "success");
+        };
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('userTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = appState.users.map(u => `
+                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/40 border-b border-gray-100 dark:border-slate-700/50">
+                    <td class="p-3 font-bold">${u.username} ${u.role==='Root Admin'?'<span class="text-[10px] text-brand-500">(Root)</span>':''}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.role==='Root Admin'?'bg-purple-100 text-purple-700':u.role==='Yard Admin'?'bg-sky-100 text-sky-700':'bg-gray-100 text-gray-700'}">${u.role}</span></td>
+                    <td class="p-3 text-[11px] text-gray-500">${(u.permissions || []).join(', ')}</td>
+                    <td class="p-3 text-center space-x-2">
+                        ${u.role !== 'Root Admin' ? `
+                            <button onclick="editUserAccount('${u.id}')" class="text-brand-600 hover:text-brand-800"><i class="fa-solid fa-pen"></i> Edit</button>
+                            <button onclick="deleteUserAccount('${u.id}')" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i> Delete</button>
+                        ` : '<span class="text-gray-400 text-[10px]">System Root</span>'}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.openUserModal = function() {
+            document.getElementById('editUserId').value = '';
+            document.getElementById('userAccountForm').reset();
+            document.getElementById('userModalTitle').innerHTML = `<i class="fa-solid fa-user-plus text-purple-500"></i> Add New User`;
+            document.getElementById('userModal').classList.remove('hidden');
+        };
+
+        window.closeUserModal = function() {
+            document.getElementById('userModal').classList.add('hidden');
+        };
+
+        window.editUserAccount = function(id) {
+            const u = appState.users.find(x => x.id === id);
+            if (!u) return;
+
+            document.getElementById('editUserId').value = u.id;
+            document.getElementById('modalUsername').value = u.username;
+            document.getElementById('modalPassword').value = u.password;
+            document.getElementById('modalRole').value = u.role;
+
+            const modules = ['dashboard', 'gatein', 'gateout', 'inventory', 'reports', 'settings', 'admin'];
+            modules.forEach(m => {
+                const chk = document.getElementById(`perm-${m}`);
+                if (chk) chk.checked = u.permissions.includes(m);
+            });
+
+            document.getElementById('userModalTitle').innerHTML = `<i class="fa-solid fa-user-pen text-purple-500"></i> Edit User Account`;
+            document.getElementById('userModal').classList.remove('hidden');
+        };
+
+        window.saveUserAccount = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editUserId').value;
+            const username = document.getElementById('modalUsername').value.trim();
+            const password = document.getElementById('modalPassword').value.trim();
+            const role = document.getElementById('modalRole').value;
+
+            const modules = ['dashboard', 'gatein', 'gateout', 'inventory', 'reports', 'settings', 'admin'];
+            const perms = [];
+            modules.forEach(m => {
+                if (document.getElementById(`perm-${m}`)?.checked) perms.push(m);
+            });
+
+            if (id) {
+                const u = appState.users.find(x => x.id === id);
+                if (u) {
+                    u.username = username;
+                    u.password = password;
+                    u.role = role;
+                    u.permissions = perms;
+                }
+            } else {
+                appState.users.push({
+                    id: 'usr_' + Date.now(),
+                    username,
+                    password,
+                    role,
+                    permissions: perms
+                });
+            }
+
+            await saveState();
+            closeUserModal();
+            showToast("User account saved successfully!", "success");
+            return false;
+        };
+
+        window.deleteUserAccount = async function(id) {
+            appState.users = appState.users.filter(u => u.id !== id);
+            await saveState();
+            showToast("User account deleted", "info");
+        };
+
+        // FIREBASE MODAL CONFIG OVERRIDE
+        window.openFirebaseConfigModal = function() {
+            document.getElementById('firebaseConfigModal').classList.remove('hidden');
+        };
+
+        window.closeFirebaseModal = function() {
+            document.getElementById('firebaseConfigModal').classList.add('hidden');
+        };
+
+        window.applyCustomFirebaseConfig = function() {
+            const raw = document.getElementById('customFirebaseConfig').value.trim();
+            try {
+                const parsed = JSON.parse(raw);
+                firebaseConfig = parsed;
+                initFirebase();
+                closeFirebaseModal();
+                showToast("Firebase Config Applied!", "success");
+            } catch(e) {
+                showToast("Invalid JSON Firebase configuration string", "error");
+            }
+        };
+
+        // HELPER FUNCTIONS
+        function setDefaultDates() {
+            const nowStr = new Date().toISOString().slice(0, 16);
+            const dateInput = document.getElementById('giDateTime');
+            if (dateInput) dateInput.value = nowStr;
+        }
+
+        window.togglePasswordVisibility = function(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash text-xs';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye text-xs';
+            }
+        };
+
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                success: 'bg-emerald-600 text-white',
+                error: 'bg-rose-600 text-white',
+                info: 'bg-brand-600 text-white',
+                warning: 'bg-amber-500 text-white'
+            };
+
+            toast.className = `p-3.5 rounded-xl shadow-2xl ${colors[type] || colors.info} text-xs font-semibold flex items-center gap-2 pointer-events-auto transition-all transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 50);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        };
+    </script>
+</body>
+</html>
